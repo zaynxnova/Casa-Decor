@@ -11,8 +11,8 @@ export const SUPABASE = {
   // TODO: Set these in production:
   // 1) Go to Supabase Project Settings → API
   // 2) Paste Project URL + anon/public key below
-  url: "https://ofwmwlosvxzbwyirxgoz.supabase.co"
-  anonKey: "sb_publishable_OBCuVQ_A6AC1viDy3ZEdHw_e-Hw4TJm"
+  url: "https://ofwmwlosvxzbwyirxgoz.supabase.co".
+  anonKey: "sb_publishable_OBCuVQ_A6AC1viDy3ZEdHw_e-Hw4TJm".
 
   // Views/tables (we will create these in supabase/schema.sql later)
   views: {
