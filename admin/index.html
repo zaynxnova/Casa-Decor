@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — CASA DECOR</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>window.__supabaseLoaded = true;</script>
+
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body data-admin-page="login">
+
+  <div id="adminToastMount" aria-live="polite"></div>
+
+  <div class="loginWrap">
+    <div class="loginCard">
+
+      <div class="loginCard__brand">
+        <div class="loginCard__logo">CD</div>
+        <div>
+          <div class="loginCard__name">CASA DECOR</div>
+          <div class="loginCard__sub">Admin Console</div>
+        </div>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label class="label" for="email">Email Address</label>
+          <input
+            id="email"
+            class="input"
+            type="email"
+            name="email"
+            placeholder="admin@casadecor.pk"
+            required
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="field">
+          <label class="label" for="password">Password</label>
+          <input
+            id="password"
+            class="input"
+            type="password"
+            name="password"
+            placeholder="••••••••"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+
+        <!-- Error message (hidden by default) -->
+        <div id="loginError" class="errorMsg" hidden></div>
+
+        <!-- RLS hint (shown if signed in but not admin) -->
+        <div data-admin-rls-hint hidden class="hintBox">
+          <strong>Not an admin?</strong> Make sure your Supabase
+          <code>profiles</code> table has <code>role = 'admin'</code>
+          for your user and RLS is correctly set up.
+        </div>
+
+        <button class="btn btn--primary btn--full" type="submit">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
