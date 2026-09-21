@@ -1,4 +1,4 @@
-ral configuration (safe for frontend)
+// Central configuration (safe for frontend)
 // IMPORTANT: Never put service-role key here. Only anon/public key.
 
 export const APP = {
@@ -26,11 +26,3 @@ anonKey: "sb_publishable_OBCuVQ_A6AC1viDy3ZEdHw_e-Hw4TJm",
     productImages: "product_images",
     inquiries: "inquiries",
   },
-) {
-  return (
-    typeof SUPABASE.url === "string" &&
-    SUPABASE.url.startsWith("https://") &&
-    typeof SUPABASE.anonKey === "string" &&
-    SUPABASE.anonKey.length > 20
-  );
-}
