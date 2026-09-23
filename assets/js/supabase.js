@@ -26,7 +26,7 @@ export function getSupabase() {
     );
   }
 
-  // Load from CDN — works on GitHub Pages (no build step needed)
+  // GitHub Pages works with CDN script loaded in HTML
   if (typeof window !== "undefined" && !window.__supabaseLoaded) {
     throw new Error(
       "Supabase JS not loaded yet. Make sure the CDN script tag is in your HTML <head>."
@@ -59,12 +59,13 @@ export async function fetchPublicSettings() {
     const sb = getSupabase();
     const { data, error } = await sb
       .from(SUPABASE.views?.publicSettings || "public_site_settings")
-      .select("key, value");
+      .select("*")
+      .eq("id", 1)
+      .maybeSingle();
+
     if (error) throw error;
-    // Convert array [{key,value}] → plain object {key: value}
-    const map = {};
-    (data || []).forEach(({ key, value }) => { map[key] = value; });
-    return { data: map, error: null };
+
+    return { data: data || null, error: null };
   } catch (err) {
     console.warn("fetchPublicSettings failed:", err.message);
     return { data: null, error: err };
@@ -78,7 +79,9 @@ export async function fetchPublicCategories() {
     const { data, error } = await sb
       .from(SUPABASE.views?.publicCategories || "public_categories")
       .select("*")
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
     if (error) throw error;
     return { data: data || [], error: null };
   } catch (err) {
@@ -107,9 +110,51 @@ export async function fetchPublicProducts({
 
     const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw error;
+
     return { data: data || [], error: null };
   } catch (err) {
     console.warn("fetchPublicProducts failed:", err.message);
+    return { data: [], error: err };
+  }
+}
+
+/* ── Public product by slug ───────────────────────────────────────────────── */
+export async function fetchPublicProductBySlug(slug) {
+  try {
+    const sb = getSupabase();
+
+    const { data, error } = await sb
+      .from(SUPABASE.views?.publicProducts || "public_products")
+      .select("*")
+      .eq("slug", slug)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return { data: data || null, error: null };
+  } catch (err) {
+    console.warn("fetchPublicProductBySlug failed:", err.message);
+    return { data: null, error: err };
+  }
+}
+
+/* ── Product images ───────────────────────────────────────────────────────── */
+export async function fetchProductImages(productId) {
+  try {
+    const sb = getSupabase();
+
+    const { data, error } = await sb
+      .from(SUPABASE.tables?.productImages || "product_images")
+      .select("id, product_id, path, alt, sort_order, is_primary, created_at")
+      .eq("product_id", productId)
+      .order("is_primary", { ascending: false })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (err) {
+    console.warn("fetchProductImages failed:", err.message);
     return { data: [], error: err };
   }
 }
@@ -118,11 +163,12 @@ export async function fetchPublicProducts({
 export async function fetchPublicOffers() {
   try {
     const sb = getSupabase();
+
     const { data, error } = await sb
       .from(SUPABASE.views?.publicOffers || "public_offers")
       .select("*")
-      .eq("active", true)
-      .order("sort_order", { ascending: true });
+      .order("created_at", { ascending: false });
+
     if (error) throw error;
     return { data: data || [], error: null };
   } catch (err) {
@@ -135,109 +181,46 @@ export async function fetchPublicOffers() {
 export async function submitInquiry(payload) {
   try {
     const sb = getSupabase();
+
     const { data, error } = await sb
       .from(SUPABASE.tables?.inquiries || "inquiries")
-      .insert([{
-        name:         payload.name         || null,
-        phone:        payload.phone        || null,
-        email:        payload.email        || null,
-        message:      payload.message      || null,
-        interested_in: payload.interested_in || null,
-        product_name: payload.product_name || null,
-        status:       "new",
-      }]);
+      .insert([
+        {
+          name: payload.name || null,
+          phone: payload.phone || null,
+          email: payload.email || null,
+          interested_in: payload.interested_in || null,
+          product_slug: payload.product_slug || null,
+          product_name: payload.product_name || null,
+          message: payload.message || null,
+          status: "new",
+          source_page: payload.source_page || null,
+        },
+      ]);
+
     if (error) throw error;
     return { data, error: null };
   } catch (err) {
     console.warn("submitInquiry failed:", err.message);
     return { data: null, error: err };
   }
-}ublicSettings() {
-  const sb = getSupabase();
-  if (!sb) return { data: null, error: new Error("Supabase not configured.") };
-
-  const { data, error } = await sb
-    .from(SUPABASE.views.publicSettings)
-    .select("*")
-    .limit(1)
-    .maybeSingle();
-
-  return { data, error };
 }
 
-/** CATEGORIES */
-export async function fetchPublicCategories() {
-  const sb = getSupabase();
-  if (!sb) return { data: null, error: new Error("Supabase not configured.") };
-
-  const { data, error } = await sb
-    .from(SUPABASE.views.publicCategories)
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
-
-  return { data, error };
-}
-
-/** PRODUCTS (catalog) */
-export async function fetchPublicProducts({ limit = 120 } = {}) {
-  const sb = getSupabase();
-  if (!sb) return { data: null, error: new Error("Supabase not configured.") };
-
-  const safeLimit = Math.min(limit, SUPABASE.maxProductsToLoad);
-
-  const { data, error } = await sb
-    .from(SUPABASE.views.publicProducts)
-    .select("*")
-    .order("featured", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(safeLimit);
-
-  return { data, error };
-}
-
-/** PRODUCT by slug */
-export async function fetchPublicProductBySlug(slug) {
-  const sb = getSupabase();
-  if (!sb) return { data: null, error: new Error("Supabase not configured.") };
-
-  const { data, error } = await sb
-    .from(SUPABASE.views.publicProducts)
-    .select("*")
-    .eq("slug", slug)
-    .limit(1)
-    .maybeSingle();
-
-  return { data, error };
-}
-
-/** Product images */
-export async function fetchProductImages(productId) {
-  const sb = getSupabase();
-  if (!sb) return { data: null, error: new Error("Supabase not configured.") };
-
-  const { data, error } = await sb
-    .from(SUPABASE.tables.productImages)
-    .select("id, path, alt, sort_order, is_primary")
-    .eq("product_id", productId)
-    .order("is_primary", { ascending: false })
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  return { data, error };
-}
-
-/** Inquiries (public can insert) */
+/* Alias used elsewhere in the project */
 export async function createInquiry(payload) {
-  const sb = getSupabase();
-  if (!sb) return { data: null, error: new Error("Supabase not configured.") };
-
-  const { data, error } = await sb
-    .from(SUPABASE.tables.inquiries)
-    .insert(payload)
-    .select("id")
-    .limit(1)
-    .maybeSingle();
-
-  return { data, error };
+  return submitInquiry(payload);
 }
+
+export default {
+  isSupabaseConfigured,
+  getSupabase,
+  storagePublicUrl,
+  fetchPublicSettings,
+  fetchPublicCategories,
+  fetchPublicProducts,
+  fetchPublicProductBySlug,
+  fetchProductImages,
+  fetchPublicOffers,
+  submitInquiry,
+  createInquiry,
+};
