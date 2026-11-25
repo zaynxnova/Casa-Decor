@@ -2,6 +2,7 @@
    CASA DECOR — supabase.js
    Central Supabase client + public data helpers
 ============================================================================= */
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE } from "./config.js";
 
 let _client = null;
@@ -26,14 +27,6 @@ export function getSupabase() {
     );
   }
 
-  // GitHub Pages works with CDN script loaded in HTML
-  if (typeof window !== "undefined" && !window.__supabaseLoaded) {
-    throw new Error(
-      "Supabase JS not loaded yet. Make sure the CDN script tag is in your HTML <head>."
-    );
-  }
-
-  const { createClient } = window.supabase;
   _client = createClient(SUPABASE.url, SUPABASE.anonKey, {
     auth: {
       autoRefreshToken: true,
