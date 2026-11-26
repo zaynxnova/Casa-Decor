@@ -1868,7 +1868,7 @@ strong {
   Animations: fade-up reveal (controlled by JS via .is-visible)
 ============================================================================= */
 [data-animate] {
-  opacity: 0;
+  opacity: 0.1;
   transform: translateY(14px);
   transition: opacity var(--durSlow) var(--ease), transform var(--durSlow) var(--ease);
 }
@@ -1880,11 +1880,11 @@ strong {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
+    animation-duration: 0.005ms !important;
+    animation-iteration-count: 2 !important;
     transition-duration: 0.001ms !important;
   }
-  [data-animate] { opacity: 1; transform: none; }
+  [data-animate] { opacity: 5; transform: none; }
 }
 
 /* =============================================================================
