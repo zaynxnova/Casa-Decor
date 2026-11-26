@@ -304,6 +304,32 @@
       border-color: #A8874B !important;
     }
 
+    /* Floating WhatsApp Contact Button */
+    .whatsapp-float {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      background-color: #25D366;
+      color: #FFFFFF;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 22px rgba(34, 32, 30, 0.18);
+      border: 2px solid #A8874B;
+      z-index: 9999;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      text-decoration: none;
+    }
+
+    .whatsapp-float:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 12px 26px rgba(37, 211, 102, 0.35);
+      color: #FFFFFF;
+    }
+
     /* Mobile Responsiveness */
     @media (max-width: 900px) {
       .grid--2,
@@ -371,6 +397,18 @@
       .drawer__panel {
         width: 100% !important;
         max-width: 100vw !important;
+      }
+
+      .whatsapp-float {
+        bottom: 18px;
+        right: 18px;
+        width: 52px;
+        height: 52px;
+      }
+
+      .whatsapp-float svg {
+        width: 28px;
+        height: 28px;
       }
     }
   </style>
@@ -565,22 +603,22 @@
 
         <div class="serviceGrid" data-animate>
           <article class="serviceCard">
-            <img src="./assets/images/placeholder-service.svg.jpeg" alt="Wallpapers and curtains" loading="lazy" />
+            <img src="./assets/images/placeholder-service.svg" alt="Wallpapers and curtains" loading="lazy" />
             <h3>Wallpapers and Curtains</h3>
             <p>End-to-end planning and finishing for a cohesive home.</p>
           </article>
           <article class="serviceCard">
-            <img src="./assets/images/placeholder-service.svg.jpeg" alt="Flooring solutions" loading="lazy" />
+            <img src="./assets/images/placeholder-service.svg" alt="Flooring solutions" loading="lazy" />
             <h3>Flooring</h3>
             <p>Wood and marble flooring options selected for durability and elegance.</p>
           </article>
           <article class="serviceCard">
-            <img src="./assets/images/placeholder-service.svg.jpeg" alt="Wall panels and feature walls" loading="lazy" />
+            <img src="./assets/images/placeholder-service.svg" alt="Wall panels and feature walls" loading="lazy" />
             <h3>Wall Panels &amp; Feature Walls</h3>
             <p>Decorative wall panels, TV/media walls and architectural focal points.</p>
           </article>
           <article class="serviceCard">
-            <img src="./assets/images/placeholder-service.svg.jpeg" alt="Ceiling designs and lighting integration" loading="lazy" />
+            <img src="./assets/images/placeholder-service.svg" alt="Ceiling designs and lighting integration" loading="lazy" />
             <h3>Ceiling Work</h3>
             <p>False ceilings, ceiling detailing and lighting integration.</p>
           </article>
@@ -695,7 +733,7 @@
       </div>
     </section>
 
-    <!-- LOCATION / CONTACT (CLEANED — NO ADMIN PLACEHOLDERS) -->
+    <!-- LOCATION / CONTACT -->
     <section class="section">
       <div class="container grid grid--2 grid--center">
         <div data-animate>
@@ -748,6 +786,18 @@
   </main>
 
   <footer id="siteFooterMount"></footer>
+
+  <!-- Floating WhatsApp Contact Button -->
+  <a id="whatsappFloat"
+     href="https://wa.me/923001234567"
+     class="whatsapp-float"
+     target="_blank"
+     rel="noopener noreferrer"
+     aria-label="Chat with Casa Decor Interior on WhatsApp">
+    <svg viewBox="0 0 32 32" width="32" height="32" fill="currentColor" aria-hidden="true">
+      <path d="M16.004 3.2c-7.06 0-12.8 5.74-12.8 12.8 0 2.256.59 4.46 1.71 6.404L3.2 28.8l6.58-1.724a12.74 12.74 0 0 0 6.224 1.616h.006c7.058 0 12.796-5.74 12.796-12.8 0-3.42-1.332-6.636-3.75-9.054A12.716 12.716 0 0 0 16.004 3.2zm0 23.336h-.004a10.61 10.61 0 0 1-5.412-1.482l-.388-.23-4.022 1.054 1.074-3.92-.254-.402a10.615 10.615 0 0 1-1.63-5.676c0-5.864 4.772-10.636 10.64-10.636 2.842 0 5.512 1.108 7.52 3.118a10.566 10.566 0 0 1 3.114 7.522c0 5.866-4.772 10.652-10.634 10.652zm5.834-7.972c-.32-.16-1.892-.934-2.186-1.04-.292-.106-.506-.16-.72.16-.212.32-.826 1.04-1.012 1.254-.186.212-.372.24-.692.08-.32-.16-1.35-.498-2.572-1.588-.952-.848-1.594-1.896-1.78-2.216-.186-.32-.02-.492.14-.652.144-.144.32-.374.48-.56.16-.186.212-.32.32-.534.106-.212.054-.4-.026-.56-.08-.16-.72-1.734-.986-2.374-.26-.624-.524-.54-.72-.55l-.614-.01c-.212 0-.56.08-.852.4-.294.32-1.12 1.094-1.12 2.668s1.146 3.094 1.306 3.308c.16.212 2.256 3.444 5.464 4.83.764.33 1.36.526 1.824.674.766.244 1.464.21 2.016.126.614-.092 1.892-.774 2.158-1.52.266-.748.266-1.388.186-1.52-.08-.134-.292-.214-.612-.374z"/>
+    </svg>
+  </a>
 
   <!-- Consultation / inquiry drawer (global) -->
   <div class="drawer" data-drawer hidden>
@@ -813,18 +863,80 @@
 
   <script type="module" src="./assets/js/main.js"></script>
 
+  <!-- Sync Floating WhatsApp with Supabase public_site_settings -->
+  <script type="module">
+    import { APP, SUPABASE } from "./assets/js/config.js";
+
+    const FALLBACK_WHATSAPP = "923001234567"; // Replace with your default WhatsApp number (country code + number, no + or spaces)
+    const DEFAULT_MSG = `Assalam-o-Alaikum ${APP.brandName} INTERIOR! I would like to inquire about your furniture and interior solutions.`;
+
+    function cleanPhone(raw) {
+      if (!raw) return "";
+      return String(raw).replace(/[^\d]/g, "");
+    }
+
+    function buildWhatsAppUrl(phone, message = DEFAULT_MSG) {
+      const number = cleanPhone(phone) || FALLBACK_WHATSAPP;
+      return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+    }
+
+    const floatBtn = document.getElementById("whatsappFloat");
+    if (floatBtn) {
+      floatBtn.href = buildWhatsAppUrl(FALLBACK_WHATSAPP);
+    }
+
+    async function syncWhatsAppFromSettings() {
+      try {
+        const endpoint = `${SUPABASE.url}/rest/v1/${SUPABASE.views.publicSettings}?select=*&limit=1`;
+        const res = await fetch(endpoint, {
+          headers: {
+            apikey: SUPABASE.anonKey,
+            Authorization: `Bearer ${SUPABASE.anonKey}`,
+          },
+        });
+        if (!res.ok) return;
+
+        const rows = await res.json();
+        const settings = Array.isArray(rows) ? rows[0] : null;
+        if (!settings) return;
+
+        const rawPhone =
+          settings.whatsapp_number ||
+          settings.whatsapp ||
+          settings.phone_whatsapp ||
+          settings.contact_whatsapp ||
+          settings.phone ||
+          settings.contact_phone;
+
+        const cleaned = cleanPhone(rawPhone);
+        if (cleaned && floatBtn) {
+          floatBtn.href = buildWhatsAppUrl(cleaned);
+        }
+
+        window.CasaDecorWhatsApp = {
+          getUrl: (customMessage) => buildWhatsAppUrl(cleaned || FALLBACK_WHATSAPP, customMessage),
+          open: (customMessage) => {
+            window.open(buildWhatsAppUrl(cleaned || FALLBACK_WHATSAPP, customMessage), "_blank", "noopener,noreferrer");
+          },
+        };
+      } catch {
+        // Keep fallback WhatsApp link if offline or settings table is empty
+      }
+    }
+
+    syncWhatsAppFromSettings();
+  </script>
+
   <!-- Post-render cleanup: ensures dynamic header/footer brand name & hides any leaked admin placeholders -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       const cleanBrandAndPlaceholders = () => {
-        // Hide any remaining "Set in Admin" strings injected by main.js
         document.querySelectorAll('[data-setting], .contactRow__value, footer, header').forEach(el => {
           if (el.textContent && el.textContent.includes('Set in Admin')) {
             el.textContent = el.textContent.replace(/Set in Admin\s*→\s*Settings/gi, 'Available at Showroom');
           }
         });
 
-        // Upgrade header & footer brand mark to CASA DECOR INTERIOR with CD SVG emblem
         const emblemSVG = `
           <svg width="32" height="32" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
             <circle cx="32" cy="32" r="30" stroke="#A8874B" stroke-width="1.4"/>
