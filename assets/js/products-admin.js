@@ -10,6 +10,13 @@ function esc(s="") {
     .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
     .replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
+function debounce(fn, wait = 160) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
 function fmtPKR(n, currency="PKR") {
   const v = Number(n);
   if (!Number.isFinite(v)) return `${currency} —`;
@@ -58,6 +65,7 @@ async function initProductsList() {
   const emptyEl = qs("[data-empty]");
 
   let categories = [];
+  let categoryMap = new Map();
   let all = [];
 
   async function loadCategories() {
@@ -72,6 +80,7 @@ async function initProductsList() {
       return;
     }
     categories = data || [];
+    categoryMap = new Map(categories.map(c => [c.id, c.name]));
     if (catEl) {
       catEl.innerHTML = `<option value="">All</option>` + categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
     }
@@ -85,7 +94,7 @@ async function initProductsList() {
 
     const { data, error } = await sb
       .from("products")
-      .select("id,name,slug,price,sale_price,sale_start,sale_end,featured,published,currency,category_id,categories(name)")
+      .select("id,name,slug,price,sale_price,sale_start,sale_end,featured,published,currency,category_id,created_at")
       .order("created_at", { ascending:false })
       .limit(600);
 
@@ -137,27 +146,32 @@ async function initProductsList() {
       return;
     }
 
-    tbody.innerHTML = rows.map(p => `
-      <tr>
-        <td>
-          <div><strong>${esc(p.name || "—")}</strong></div>
-          <div class="muted">${esc(p.slug || "")}</div>
-        </td>
-        <td class="muted">${esc(p.categories?.name || "—")}</td>
-        <td><strong>${esc(fmtPKR(p.price, p.currency || "PKR"))}</strong></td>
-        <td>${saleLabel(p)}</td>
-        <td>${p.featured ? `<span class="tag tag--gold">featured</span>` : `<span class="tag">—</span>`}</td>
-        <td>${p.published ? `<span class="tag tag--ok">published</span>` : `<span class="tag">hidden</span>`}</td>
-        <td>
-          <div class="actions">
-            <a class="btn btn--secondary btn--sm" href="./product-editor.html?id=${p.id}">Edit</a>
-            <button class="btn btn--secondary btn--sm" data-toggle-featured="${p.id}">${p.featured ? "Unfeature" : "Feature"}</button>
-            <button class="btn btn--secondary btn--sm" data-toggle-published="${p.id}">${p.published ? "Hide" : "Publish"}</button>
-            <button class="btn btn--danger btn--sm" data-delete="${p.id}">Delete</button>
-          </div>
-        </td>
-      </tr>
-    `).join("");
+    if (emptyEl) emptyEl.hidden = true;
+
+    tbody.innerHTML = rows.map(p => {
+      const catName = categoryMap.get(p.category_id) || "—";
+      return `
+        <tr>
+          <td>
+            <div><strong>${esc(p.name || "—")}</strong></div>
+            <div class="muted">${esc(p.slug || "")}</div>
+          </td>
+          <td class="muted">${esc(catName)}</td>
+          <td><strong>${esc(fmtPKR(p.price, p.currency || "PKR"))}</strong></td>
+          <td>${saleLabel(p)}</td>
+          <td>${p.featured ? `<span class="tag tag--gold">featured</span>` : `<span class="tag">—</span>`}</td>
+          <td>${p.published ? `<span class="tag tag--ok">published</span>` : `<span class="tag">hidden</span>`}</td>
+          <td>
+            <div class="actions">
+              <a class="btn btn--secondary btn--sm" href="./product-editor.html?id=${p.id}">Edit</a>
+              <button class="btn btn--secondary btn--sm" data-toggle-featured="${p.id}">${p.featured ? "Unfeature" : "Feature"}</button>
+              <button class="btn btn--secondary btn--sm" data-toggle-published="${p.id}">${p.published ? "Hide" : "Publish"}</button>
+              <button class="btn btn--danger btn--sm" data-delete="${p.id}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
 
     // bind actions
     qsa("[data-toggle-featured]", tbody).forEach(btn => {
@@ -206,6 +220,8 @@ async function initProductsList() {
         if (!ok) return;
 
         setBusy(btn, true, "Deleting…");
+        // Clean up child product_images rows first so foreign key constraints never block deletion
+        await sb.from("product_images").delete().eq("product_id", id);
         const { error } = await sb.from("products").delete().eq("id", id);
         setBusy(btn, false);
 
@@ -447,6 +463,7 @@ async function initProductEditor() {
     if (!ok) return;
 
     setBusy(delBtn, true, "Deleting…");
+    await sb.from("product_images").delete().eq("product_id", id);
     const { error } = await sb.from("products").delete().eq("id", id);
     setBusy(delBtn, false);
 
@@ -539,7 +556,6 @@ async function initProductEditor() {
       qs("[data-set-primary]", row)?.addEventListener("click", async (e) => {
         const btn = e.currentTarget;
         setBusy(btn, true);
-        // set all to false, then set chosen true (transaction handled by DB constraints/policies later)
         const { error: e1 } = await sb.from("product_images").update({ is_primary:false }).eq("product_id", productId);
         const { error: e2 } = await sb.from("product_images").update({ is_primary:true }).eq("id", imgId);
         setBusy(btn, false);
@@ -606,7 +622,6 @@ async function initProductEditor() {
 
         setBusy(btn, true, "Deleting…");
 
-        // fetch path then delete
         const { data: img, error: e0 } = await sb.from("product_images").select("id,path").eq("id", imgId).maybeSingle();
         if (e0 || !img) { setBusy(btn,false); return adminToast({ type:"error", title:"Delete failed", message:e0?.message || "Not found." }); }
 
@@ -639,7 +654,6 @@ async function initProductEditor() {
 
     setBusy(uploadBtn, true, "Uploading…");
 
-    // Determine next sort_order start
     const { data: existing } = await sb
       .from("product_images")
       .select("sort_order")
@@ -682,7 +696,6 @@ async function initProductEditor() {
       nextOrder += 10;
     }
 
-    // if no primary exists, set first as primary
     const { data: prim } = await sb
       .from("product_images")
       .select("id")
